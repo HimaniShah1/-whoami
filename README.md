@@ -1,4 +1,4 @@
-# Backend Odyssey
+# $ whoami
 
 An immersive first-person 3D portfolio built with Next.js and React Three
 Fiber: the visitor plays an HTTP request traveling through a fictional but
