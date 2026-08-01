@@ -30,7 +30,10 @@ export default function SceneManager({ activeRoomId }: SceneManagerProps) {
 
   return (
     <Suspense fallback={null}>
-      <RoomErrorBoundary key={retryCount} onRetry={() => setRetryCount((count) => count + 1)}>
+      <RoomErrorBoundary
+        key={`${activeRoomId}:${retryCount}`}
+        onRetry={() => setRetryCount((count) => count + 1)}
+      >
         {/* eslint-disable-next-line react-hooks/static-components -- intentional:
             a fresh lazy() component is created on retry so a stale cached
             import() rejection isn't replayed; see the useMemo comment above. */}

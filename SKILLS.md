@@ -87,9 +87,15 @@ public/
 | `statusWarning` | `#ffb454` | Warning status LEDs/metrics |
 | `statusError` | `#ff5f56` | Error states, error boundaries, connection-lost UI |
 | `fog` | `#0a0e14` | Always matches `background` to avoid visible geometry pop-in |
+| `textMuted` | `#8fa3b8` | Secondary/muted body text on dark surfaces |
+| `rackFrame` | `#1b2230` | Server rack / hardware frame material color |
 
-Defined once in `src/engine/constants/design-tokens.ts` — never hardcode
-these hex values elsewhere; import `colors`.
+Source of truth is `src/engine/constants/design-tokens.ts` — never hardcode
+these hex values in JSX/TSX; import `colors`. Tailwind CSS itself can't
+reference a runtime JS object, so `src/app/globals.css`'s `@theme` block
+mirrors the same hex values as `--color-*` CSS variables (`bg-background`,
+`text-primary-muted`, etc.) for use in Tailwind classes — when a token's hex
+value changes, update both files together.
 
 ### Typography
 
