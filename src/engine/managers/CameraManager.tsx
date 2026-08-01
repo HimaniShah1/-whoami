@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, type ElementRef } from 'react';
+import { useRef, type ComponentRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { PointerLockControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -10,7 +10,7 @@ const BASE_SPEED = 4;
 const SPRINT_MULTIPLIER = 1.8;
 
 export default function CameraManager() {
-  const controlsRef = useRef<ElementRef<typeof PointerLockControls>>(null);
+  const controlsRef = useRef<ComponentRef<typeof PointerLockControls>>(null);
   const keyboard = useKeyboardControls();
   const { camera } = useThree();
   const moveDirection = useRef(new THREE.Vector3());

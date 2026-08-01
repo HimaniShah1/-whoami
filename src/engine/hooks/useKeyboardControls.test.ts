@@ -51,4 +51,23 @@ describe('useKeyboardControls', () => {
       interact: false,
     });
   });
+
+  it('resets all keys to false when the window loses focus', () => {
+    const { result } = renderHook(() => useKeyboardControls());
+
+    dispatchKey('keydown', 'KeyW');
+    expect(result.current.current.forward).toBe(true);
+
+    window.dispatchEvent(new Event('blur'));
+
+    expect(result.current.current).toEqual({
+      forward: false,
+      backward: false,
+      left: false,
+      right: false,
+      sprint: false,
+      jump: false,
+      interact: false,
+    });
+  });
 });

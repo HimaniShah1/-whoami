@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGameStore } from './useGameStore';
+import { eventBus } from '@/engine/managers/EventBus';
 
 const initial = useGameStore.getState();
 
@@ -46,5 +47,47 @@ describe('useGameStore', () => {
     const eggs = useGameStore.getState().collectedEasterEggs;
     expect(eggs.has('sudo-rm-rf')).toBe(true);
     expect(eggs.has('docker-ps')).toBe(true);
+  });
+});
+
+describe('useGameStore EventBus emissions', () => {
+  afterEach(() => {
+    eventBus.all.clear();
+  });
+
+  it('emits room:entered with the correct payload on a normal entry', () => {
+    const handler = vi.fn();
+    eventBus.on('room:entered', handler);
+
+    useGameStore.getState().enterRoom('api-gateway');
+
+    expect(handler).toHaveBeenCalledWith({ roomId: 'api-gateway' });
+    eventBus.off('room:entered', handler);
+  });
+
+  it('emits room:unlocked with the correct payload the first time a room is entered', () => {
+    const handler = vi.fn();
+    eventBus.on('room:unlocked', handler);
+
+    useGameStore.getState().enterRoom('api-gateway');
+
+    expect(handler).toHaveBeenCalledWith({ roomId: 'api-gateway' });
+    eventBus.off('room:unlocked', handler);
+  });
+
+  it('does not emit room:unlocked again on re-entry into an already-visited room, but still emits room:entered', () => {
+    useGameStore.getState().enterRoom('api-gateway');
+
+    const enteredHandler = vi.fn();
+    const unlockedHandler = vi.fn();
+    eventBus.on('room:entered', enteredHandler);
+    eventBus.on('room:unlocked', unlockedHandler);
+
+    useGameStore.getState().enterRoom('api-gateway');
+
+    expect(enteredHandler).toHaveBeenCalledWith({ roomId: 'api-gateway' });
+    expect(unlockedHandler).not.toHaveBeenCalled();
+    eventBus.off('room:entered', enteredHandler);
+    eventBus.off('room:unlocked', unlockedHandler);
   });
 });
