@@ -7,6 +7,8 @@ export const colors = {
   statusWarning: '#ffb454',
   statusError: '#ff5f56',
   fog: '#0a0e14',
+  textMuted: '#8fa3b8',
+  rackFrame: '#1b2230',
 } as const;
 
 export const fonts = {

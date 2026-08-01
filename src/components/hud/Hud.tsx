@@ -13,7 +13,7 @@ export default function Hud() {
   const room = getRoomById(currentRoomId);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 flex justify-between p-4 font-mono text-xs text-[#e6f7ff]">
+    <div className="pointer-events-none fixed inset-x-0 top-0 flex justify-between p-4 font-mono text-xs text-primary-muted">
       <div className="space-y-0.5">
         <div>REQUEST {requestId}</div>
         <div>{protocol}</div>

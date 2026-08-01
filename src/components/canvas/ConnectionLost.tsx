@@ -1,12 +1,12 @@
 export default function ConnectionLost() {
   return (
-    <main className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#0a0e14] font-mono text-[#e6f7ff]">
-      <h1 className="text-lg text-[#ff5f56]">CONNECTION LOST</h1>
-      <p className="text-sm text-[#8fa3b8]">The rendering context was lost.</p>
+    <main className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background font-mono text-primary-muted">
+      <h1 className="text-lg text-status-error">CONNECTION LOST</h1>
+      <p className="text-sm text-text-muted">The rendering context was lost.</p>
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="rounded border border-[#4fd1ff] px-4 py-2 text-sm text-[#4fd1ff] hover:bg-[#4fd1ff]/10"
+        className="rounded border border-primary px-4 py-2 text-sm text-primary hover:bg-primary/10"
       >
         Reload
       </button>
