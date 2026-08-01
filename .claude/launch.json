@@ -3,11 +3,8 @@
   "configurations": [
     {
       "name": "backend-odyssey-dev",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": [
-        "-c",
-        "cd .worktrees/phase1-foundation && /Users/himanishah/.nvm/versions/node/v22.22.3/bin/npm run dev"
-      ],
+      "runtimeExecutable": "/Users/himanishah/.nvm/versions/node/v22.22.3/bin/npm",
+      "runtimeArgs": ["run", "dev"],
       "port": 3000
     }
   ]
