@@ -2,6 +2,7 @@
 
 import { lazy, Suspense } from 'react';
 import type { RoomId } from '@/types/rooms';
+import RoomErrorBoundary from './RoomErrorBoundary';
 
 const ROOM_COMPONENTS: Partial<Record<RoomId, ReturnType<typeof lazy>>> = {
   'load-balancer': lazy(() => import('@/scenes/world/PlaceholderRoom')),
@@ -17,7 +18,9 @@ export default function SceneManager({ activeRoomId }: SceneManagerProps) {
 
   return (
     <Suspense fallback={null}>
-      <RoomComponent />
+      <RoomErrorBoundary>
+        <RoomComponent />
+      </RoomErrorBoundary>
     </Suspense>
   );
 }
