@@ -27,6 +27,7 @@ export default function Experience({ onContextLost }: ExperienceProps) {
         });
       }}
     >
+      <fog attach="fog" args={[colors.fog, 5, 40]} />
       <Suspense fallback={null}>
         <PhysicsProvider>
           <CameraManager />
