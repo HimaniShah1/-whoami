@@ -32,6 +32,7 @@ export default function CameraManager() {
   const verticalVelocity = useRef(0);
   const isGrounded = useRef(true);
   const wasJumpPressed = useRef(false);
+  const bobWeight = useRef(0);
 
   // R3F's useFrame is the sanctioned place to imperatively mutate the camera
   // returned by useThree() every frame — this is not a React Compiler
@@ -62,8 +63,18 @@ export default function CameraManager() {
     }
 
     const speed = BASE_SPEED * (keys.sprint ? SPRINT_MULTIPLIER : 1);
-    velocity.current.x = smoothVelocity(velocity.current.x, inputX * speed, delta, MOVEMENT_RESPONSIVENESS);
-    velocity.current.z = smoothVelocity(velocity.current.z, inputZ * speed, delta, MOVEMENT_RESPONSIVENESS);
+    velocity.current.x = smoothVelocity(
+      velocity.current.x,
+      inputX * speed,
+      delta,
+      MOVEMENT_RESPONSIVENESS,
+    );
+    velocity.current.z = smoothVelocity(
+      velocity.current.z,
+      inputZ * speed,
+      delta,
+      MOVEMENT_RESPONSIVENESS,
+    );
 
     camera.getWorldDirection(forwardVector.current);
     forwardVector.current.y = 0;
@@ -80,8 +91,9 @@ export default function CameraManager() {
     }
     wasJumpPressed.current = keys.jump;
 
+    const previousVerticalVelocity = verticalVelocity.current;
     verticalVelocity.current = applyGravity(verticalVelocity.current, delta, GRAVITY);
-    baseY.current += verticalVelocity.current * delta;
+    baseY.current += ((previousVerticalVelocity + verticalVelocity.current) / 2) * delta;
 
     if (baseY.current <= EYE_HEIGHT) {
       baseY.current = EYE_HEIGHT;
@@ -92,15 +104,26 @@ export default function CameraManager() {
     // Head-bob: cosmetic offset recomputed fresh each frame (not
     // accumulated), only while grounded and moving, skipped under
     // reduced-motion. Distance only accrues while grounded, so the bob
-    // phase pauses cleanly during a jump and resumes on landing.
+    // phase pauses cleanly during a jump and resumes on landing. The raw
+    // offset is always computed, but it's scaled by a smoothed bobWeight
+    // (0-1) that eases toward 1 while grounded-and-moving and toward 0
+    // otherwise, so the applied offset fades out/in instead of snapping
+    // to/from zero when starting, stopping, jumping, or landing.
     const horizontalSpeed = Math.hypot(velocity.current.x, velocity.current.z);
     if (isGrounded.current && horizontalSpeed > 0.01) {
       distanceTraveled.current += horizontalSpeed * delta;
     }
+    const targetBobWeight =
+      !reducedMotion && isGrounded.current && horizontalSpeed > 0.01 ? 1 : 0;
+    bobWeight.current = smoothVelocity(
+      bobWeight.current,
+      targetBobWeight,
+      delta,
+      MOVEMENT_RESPONSIVENESS,
+    );
     const bob =
-      !reducedMotion && isGrounded.current
-        ? headBobOffset(distanceTraveled.current, HEAD_BOB_AMPLITUDE, HEAD_BOB_FREQUENCY)
-        : 0;
+      headBobOffset(distanceTraveled.current, HEAD_BOB_AMPLITUDE, HEAD_BOB_FREQUENCY) *
+      bobWeight.current;
 
     // Second flag for the same intentional mutation — see the comment above
     // useFrame() for why this is safe to suppress.

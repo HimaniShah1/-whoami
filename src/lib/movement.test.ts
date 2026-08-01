@@ -25,6 +25,16 @@ describe('smoothVelocity', () => {
     const fast = smoothVelocity(0, 10, 0.016, 16);
     expect(fast).toBeGreaterThan(slow);
   });
+
+  it('is framerate-independent: N small steps equal one large step', () => {
+    let stepped = 0;
+    for (let i = 0; i < 10; i++) stepped = smoothVelocity(stepped, 10, 0.01, 8);
+    expect(stepped).toBeCloseTo(smoothVelocity(0, 10, 0.1, 8), 12);
+  });
+
+  it('never overshoots the target, even on a huge delta', () => {
+    expect(smoothVelocity(0, 10, 10, 8)).toBeLessThanOrEqual(10);
+  });
 });
 
 describe('headBobOffset', () => {
