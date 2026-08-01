@@ -15,6 +15,9 @@ export default function AppRoot() {
   const setReducedMotion = useUIStore((state) => state.setReducedMotion);
 
   useEffect(() => {
+    // One-time mount detection of browser-only APIs (WebGL, matchMedia) — must run
+    // in an effect (not during render) to avoid an SSR/hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWebglReady(isWebGLAvailable());
     setReducedMotion(prefersReducedMotion());
   }, [setReducedMotion]);
