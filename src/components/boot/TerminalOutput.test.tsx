@@ -35,6 +35,7 @@ describe('TerminalOutput', () => {
   it('clamps progress into the 0-100 range (lower bound)', () => {
     render(<TerminalOutput visibleLines={[]} progress={-20} done={false} reducedMotion={false} />);
     expect(screen.getByText('0%')).toBeInTheDocument();
+    expect(screen.getByTestId('boot-progress-fill')).toHaveStyle({ width: '0%' });
   });
 
   it('renders the progress bar fill with the rounded width', () => {
