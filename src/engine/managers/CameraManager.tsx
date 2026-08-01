@@ -102,13 +102,12 @@ export default function CameraManager() {
     }
 
     // Head-bob: cosmetic offset recomputed fresh each frame (not
-    // accumulated), only while grounded and moving, skipped under
-    // reduced-motion. Distance only accrues while grounded, so the bob
-    // phase pauses cleanly during a jump and resumes on landing. The raw
-    // offset is always computed, but it's scaled by a smoothed bobWeight
-    // (0-1) that eases toward 1 while grounded-and-moving and toward 0
-    // otherwise, so the applied offset fades out/in instead of snapping
-    // to/from zero when starting, stopping, jumping, or landing.
+    // accumulated). Distance only accrues while grounded, so the bob phase
+    // pauses cleanly during a jump and resumes on landing. The raw offset is
+    // always computed, but it's scaled by a smoothed bobWeight (0-1) that
+    // eases toward 1 while grounded-and-moving-and-not-reduced-motion, and
+    // toward 0 otherwise, so the applied offset fades out/in instead of
+    // snapping to/from zero when starting, stopping, jumping, or landing.
     const horizontalSpeed = Math.hypot(velocity.current.x, velocity.current.z);
     if (isGrounded.current && horizontalSpeed > 0.01) {
       distanceTraveled.current += horizontalSpeed * delta;
