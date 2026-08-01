@@ -27,9 +27,19 @@ describe('TerminalOutput', () => {
     expect(screen.queryByText('_')).not.toBeInTheDocument();
   });
 
-  it('clamps progress into the 0-100 range', () => {
+  it('clamps progress into the 0-100 range (upper bound)', () => {
     render(<TerminalOutput visibleLines={[]} progress={150} done={false} reducedMotion={false} />);
     expect(screen.getByText('100%')).toBeInTheDocument();
+  });
+
+  it('clamps progress into the 0-100 range (lower bound)', () => {
+    render(<TerminalOutput visibleLines={[]} progress={-20} done={false} reducedMotion={false} />);
+    expect(screen.getByText('0%')).toBeInTheDocument();
+  });
+
+  it('renders the progress bar fill with the rounded width', () => {
+    render(<TerminalOutput visibleLines={[]} progress={62.4} done={false} reducedMotion={false} />);
+    expect(screen.getByTestId('boot-progress-fill')).toHaveStyle({ width: '62%' });
   });
 
   it('applies the pulse animation to the cursor unless reducedMotion is set', () => {

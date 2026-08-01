@@ -25,7 +25,11 @@ export default function TerminalOutput({
       )}
       <div className="mt-6">
         <div className="h-1 w-full bg-background-elevated">
-          <div className="h-full bg-primary" style={{ width: `${clampedProgress}%` }} />
+          <div
+            data-testid="boot-progress-fill"
+            className="h-full bg-primary"
+            style={{ width: `${clampedProgress}%` }}
+          />
         </div>
         <div className="mt-1 text-xs text-primary">{clampedProgress}%</div>
       </div>
