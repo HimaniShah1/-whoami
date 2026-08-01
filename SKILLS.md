@@ -25,7 +25,10 @@ something real about backend engineering, not just look like it does.
 - **`AppRoot`** (`src/components/AppRoot.tsx`) is the single entry point: it
   detects WebGL support and `prefers-reduced-motion`, then renders either the
   3D `Experience` + `Hud`, the static `WebGLUnavailable` fallback, or
-  `ConnectionLost` if the GPU context dies mid-session.
+  `ConnectionLost` if the GPU context dies mid-session. It also gates entry
+  behind `BootSequence` (Phase 3) on a once-per-session basis, backed by
+  `sessionStorage` (`src/lib/session.ts`), so the boot log only plays once per
+  browser session rather than on every mount.
 - **`Experience`** (`src/components/canvas/Experience.tsx`) owns the R3F
   `Canvas` and composes `PhysicsProvider` → `CameraManager` → `SceneManager`.
   It also attaches the `webglcontextlost` listener and reports it upward via
@@ -68,7 +71,7 @@ src/
     physics/             # Physics provider/abstractions
     constants/           # Design tokens, room registry
   types/                 # Shared TypeScript types
-  lib/                   # Framework-agnostic pure utilities (cn, webgl, reduced-motion)
+  lib/                   # Framework-agnostic pure utilities (cn, webgl, reduced-motion, session)
 public/
   models/ textures/ audio/ fonts/
 ```
@@ -142,9 +145,14 @@ headlines, ever.
   essential to gameplay comprehension (camera head-bob/inertia, decorative
   particle motion); essential feedback (a lit-up interactable, a status LED)
   still animates, just without the purely decorative motion layered on top.
-- GSAP is reserved for multi-step cinematic timelines (the boot sequence,
-  Phase 3) — do not reach for it for simple per-frame movement, which
-  `useFrame` handles more simply.
+- GSAP is for multi-step cinematic timelines — do not reach for it for simple
+  per-frame movement, which `useFrame` handles more simply. The boot sequence
+  (Phase 3) established the pattern: a single `gsap.timeline()` with one
+  `.call()` (reveal a line) + one `.to()` (advance progress) pair per line,
+  followed by a trailing hold. Skip is implemented via `timeline.progress(1)`,
+  which fires all intervening callbacks — `timeline.seek()` would NOT, since
+  it suppresses events by default, so future phases copying this pattern
+  should reach for `progress(1)`, not `seek()`.
 
 ## State Management Conventions
 
@@ -266,6 +274,10 @@ Established in later phases, recorded here as they're built:
 - **Proximity trigger** (`useProximity`, added Phase 4): generic hook for
   "player is within N units of point X" — powers interact prompts and future
   room preloading.
+- **Boot Sequence** (`src/components/boot/`, Phase 3): the established split
+  for cinematic/timeline-driven UI is `bootScript.ts` (pure content
+  generation), `TerminalOutput.tsx` (presentation), and `BootSequence.tsx`
+  (GSAP orchestration) — reuse this split for future timeline-driven overlays.
 
 ## Future Roadmap
 

@@ -7,8 +7,8 @@ This is Phase 3 of "Backend Odyssey," following Phase 1 (Foundation) and Phase 2
 cinematic terminal boot sequence — the site's version of a loading screen,
 themed as their HTTP request being provisioned into the backend. `SKILLS.md`
 already reserves `src/components/boot/` for this phase and designates GSAP
-(installed but unused since Phase 1) as the tool for exactly this kind of
-multi-step cinematic timeline.
+(a new dependency, installed in this phase) as the tool for exactly this kind
+of multi-step cinematic timeline.
 
 **Goal of this phase:** a full-screen, dark terminal overlay that plays before
 `Experience`/`Hud` mount, showing personalized boot log lines (using the
