@@ -44,6 +44,10 @@ export function useKeyboardControls(): RefObject<KeyboardState> {
     const handleKeyDown = (event: KeyboardEvent) => {
       const action = KEY_MAP[event.code];
       if (action) state.current[action] = true;
+      // Space's default browser behavior is to activate/scroll the focused
+      // element. Prevent that for the jump key so it doesn't conflict with
+      // focusable UI later — harmless today since nothing is focusable yet.
+      if (event.code === 'Space') event.preventDefault();
     };
     const handleKeyUp = (event: KeyboardEvent) => {
       const action = KEY_MAP[event.code];

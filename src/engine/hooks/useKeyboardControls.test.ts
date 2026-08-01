@@ -52,6 +52,18 @@ describe('useKeyboardControls', () => {
     });
   });
 
+  it('calls preventDefault on Space keydown but not on KeyW keydown', () => {
+    renderHook(() => useKeyboardControls());
+
+    const spaceEvent = new KeyboardEvent('keydown', { code: 'Space', cancelable: true });
+    window.dispatchEvent(spaceEvent);
+    expect(spaceEvent.defaultPrevented).toBe(true);
+
+    const wEvent = new KeyboardEvent('keydown', { code: 'KeyW', cancelable: true });
+    window.dispatchEvent(wEvent);
+    expect(wEvent.defaultPrevented).toBe(false);
+  });
+
   it('resets all keys to false when the window loses focus', () => {
     const { result } = renderHook(() => useKeyboardControls());
 
