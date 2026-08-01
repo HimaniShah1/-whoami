@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 import { useGameStore } from '@/engine/state/useGameStore';
 import { useUIStore } from '@/engine/state/useUIStore';
@@ -9,7 +9,8 @@ import TerminalOutput from './TerminalOutput';
 
 const LINE_DURATION_SECONDS = 0.5;
 const POST_COMPLETE_HOLD_SECONDS = 0.6;
-const REDUCED_MOTION_DURATION_SECONDS = 0.001;
+const REDUCED_MOTION_STEP_SECONDS = 0.001;
+const REDUCED_MOTION_HOLD_SECONDS = 1.5;
 
 interface BootSequenceProps {
   onComplete: () => void;
@@ -21,20 +22,20 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   const ttl = useGameStore((state) => state.ttl);
   const reducedMotion = useUIStore((state) => state.reducedMotion);
 
-  const script = useMemo(() => buildBootScript(requestId, protocol, ttl), [requestId, protocol, ttl]);
+  const [script] = useState(() => buildBootScript(requestId, protocol, ttl));
   const [visibleCount, setVisibleCount] = useState(0);
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
     const lines = script;
-    const stepDuration = reducedMotion ? REDUCED_MOTION_DURATION_SECONDS : LINE_DURATION_SECONDS;
-    const holdDuration = reducedMotion ? REDUCED_MOTION_DURATION_SECONDS : POST_COMPLETE_HOLD_SECONDS;
+    const lineCount = Math.max(lines.length, 1);
+    const stepDuration = reducedMotion ? REDUCED_MOTION_STEP_SECONDS : LINE_DURATION_SECONDS;
+    const holdDuration = reducedMotion ? REDUCED_MOTION_HOLD_SECONDS : POST_COMPLETE_HOLD_SECONDS;
     const progressState = { value: 0 };
 
     const timeline = gsap.timeline({
       onComplete: () => {
-        setDone(true);
         onComplete();
       },
     });
@@ -42,12 +43,13 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
     lines.forEach((_, index) => {
       timeline.call(() => setVisibleCount(index + 1));
       timeline.to(progressState, {
-        value: ((index + 1) / lines.length) * 100,
+        value: ((index + 1) / lineCount) * 100,
         duration: stepDuration,
         onUpdate: () => setProgress(progressState.value),
       });
     });
 
+    timeline.call(() => setDone(true));
     timeline.to({}, { duration: holdDuration });
 
     const skip = () => timeline.progress(1);
@@ -63,7 +65,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-8">
-      <div className="w-full max-w-lg">
+      <div className="min-h-72 w-full max-w-lg">
         <TerminalOutput
           visibleLines={script.slice(0, visibleCount)}
           progress={progress}
