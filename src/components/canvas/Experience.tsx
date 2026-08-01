@@ -7,6 +7,7 @@ import CameraManager from '@/engine/managers/CameraManager';
 import SceneManager from '@/engine/managers/SceneManager';
 import { useGameStore } from '@/engine/state/useGameStore';
 import { colors } from '@/engine/constants/design-tokens';
+import { EYE_HEIGHT } from '@/engine/constants/player';
 
 interface ExperienceProps {
   onContextLost?: () => void;
@@ -18,7 +19,7 @@ export default function Experience({ onContextLost }: ExperienceProps) {
   return (
     <Canvas
       shadows
-      camera={{ fov: 75, position: [0, 1.6, 5] }}
+      camera={{ fov: 75, position: [0, EYE_HEIGHT, 5] }}
       style={{ background: colors.background }}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener('webglcontextlost', (event) => {
