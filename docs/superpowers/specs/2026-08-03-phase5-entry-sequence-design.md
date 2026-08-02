@@ -244,12 +244,16 @@ store action beyond its own local timeline state).
 
 ## Testing
 
+- `src/scenes/world/shared/TerminalPanel.tsx` gets an RTL unit test, like
+  its sibling `TerminalOutput.tsx` (`TerminalOutput.test.tsx`) — it's pure
+  presentational DOM with no R3F/GSAP/proximity dependency, so it belongs
+  in the same tested bucket as `TerminalOutput`/`Hud`, not the
+  manually-verified one.
 - `src/scenes/world/shared/RoomShell.tsx`, `Terminal.tsx`,
-  `TerminalPanel.tsx`, `src/components/canvas/TerminalOverlay.tsx`,
-  the three bespoke room files — manually verified only (R3F/GSAP/DOM
-  components with proximity, keyboard, and timeline side effects),
-  matching every precedent set in Phases 3-4 (`BootSequence`,
-  `RoomTransition`, `Portal`).
+  `src/components/canvas/TerminalOverlay.tsx`, and the three bespoke room
+  files — manually verified only (R3F/GSAP components with proximity,
+  keyboard, and timeline side effects), matching every precedent set in
+  Phases 3-4 (`BootSequence`, `RoomTransition`, `Portal`).
 - No new pure functions are introduced this phase (unlike Phase 4's
   `isWithinRadius`/`getIncomingRoomId`) — the interact-key edge-trigger
   reuses `CameraManager`'s already-established inline `useFrame` + ref
