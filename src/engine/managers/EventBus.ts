@@ -5,6 +5,7 @@ export type AppEvents = {
   'room:entered': { roomId: RoomId };
   'room:unlocked': { roomId: RoomId };
   'terminal:command': { command: string };
+  'terminal:trigger': { id: string; title: string; lines: string[] };
   'packet:delivered': { fromRoomId: RoomId; toRoomId: RoomId };
   'portal:trigger': {
     targetRoomId: RoomId;
