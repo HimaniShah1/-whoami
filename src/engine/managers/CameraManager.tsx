@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef, type ComponentRef } from 'react';
+import { useEffect, useRef, type ComponentRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { PointerLockControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useKeyboardControls } from '@/engine/hooks/useKeyboardControls';
 import { useUIStore } from '@/engine/state/useUIStore';
+import { eventBus, type AppEvents } from '@/engine/managers/EventBus';
 import { applyGravity, headBobOffset, smoothVelocity } from '@/lib/movement';
 import {
   BASE_SPEED,
@@ -33,6 +34,22 @@ export default function CameraManager() {
   const isGrounded = useRef(true);
   const wasJumpPressed = useRef(false);
   const bobWeight = useRef(0);
+
+  useEffect(() => {
+    const handleReset = ({ position, facingYaw }: AppEvents['camera:reset']) => {
+      camera.position.set(position[0], position[1], position[2]);
+      camera.rotation.set(0, facingYaw, 0);
+      baseY.current = position[1];
+      velocity.current.x = 0;
+      velocity.current.z = 0;
+      verticalVelocity.current = 0;
+      isGrounded.current = true;
+      distanceTraveled.current = 0;
+      bobWeight.current = 0;
+    };
+    eventBus.on('camera:reset', handleReset);
+    return () => eventBus.off('camera:reset', handleReset);
+  }, [camera]);
 
   // R3F's useFrame is the sanctioned place to imperatively mutate the camera
   // returned by useThree() every frame — this is not a React Compiler
