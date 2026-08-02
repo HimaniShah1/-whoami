@@ -41,6 +41,38 @@ describe('useGameStore', () => {
     expect(useGameStore.getState().isUnlocked('auth-service')).toBe(true);
   });
 
+  it('decrements ttl by 1 on a successful entry', () => {
+    const ttlBefore = useGameStore.getState().ttl;
+    useGameStore.getState().enterRoom('api-gateway');
+    expect(useGameStore.getState().ttl).toBe(ttlBefore - 1);
+  });
+
+  it('does not change ttl or latencyMs on a refused (locked) entry', () => {
+    const before = useGameStore.getState();
+    useGameStore.getState().enterRoom('auth-service');
+    const after = useGameStore.getState();
+    expect(after.ttl).toBe(before.ttl);
+    expect(after.latencyMs).toBe(before.latencyMs);
+  });
+
+  it('floors ttl at 0 instead of going negative', () => {
+    useGameStore.setState({ ttl: 0 });
+    useGameStore.getState().enterRoom('api-gateway');
+    expect(useGameStore.getState().ttl).toBe(0);
+  });
+
+  it('sets latencyMs to a spiked value within the expected range on entry', () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    useGameStore.getState().enterRoom('api-gateway');
+    expect(useGameStore.getState().latencyMs).toBe(150);
+    randomSpy.mockRestore();
+  });
+
+  it('setLatency sets the given value directly', () => {
+    useGameStore.getState().setLatency(42);
+    expect(useGameStore.getState().latencyMs).toBe(42);
+  });
+
   it('collectEasterEgg adds the id without losing previous ones', () => {
     useGameStore.getState().collectEasterEgg('sudo-rm-rf');
     useGameStore.getState().collectEasterEgg('docker-ps');
