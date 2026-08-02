@@ -128,7 +128,10 @@ headlines, ever.
   require the `getDerivedStateFromError` lifecycle method).
 - Reusable geometry/material combinations that recur across rooms should be
   extracted into their own component under `scenes/world/shared/` once a
-  second room needs them (YAGNI until then — Phase 1 has exactly one room).
+  second room needs them. Established in Phase 4: `Portal` (the walk-through
+  room-to-room interactable) and `RoomTemplate` (the generic floor/lighting/
+  label/portals shell used by every room except the bespoke `load-balancer`)
+  both live there.
 - `SceneManager`'s registry is the only place `React.lazy` is called for
   rooms; lazy components are created once at module scope, never inside a
   render function (recreating a lazy component every render causes remount/
@@ -164,9 +167,12 @@ headlines, ever.
 - Cross-cutting side effects (audio cues, achievement toasts) subscribe to
   `EventBus`, not to store changes directly, so they stay decoupled from
   which store happens to own the underlying state.
-- `requestId`, `ttl`, and `latencyMs` in `useGameStore` are static placeholder
-  values in Phase 1. They become dynamic (ttl decrementing, latency reacting
-  to traversal) starting Phase 4, once real room-to-room travel exists.
+- `requestId` remains a static placeholder generated once on module load.
+  `ttl` and `latencyMs`, static placeholders through Phase 3, became dynamic
+  in Phase 4: `enterRoom` decrements `ttl` by 1 per successful hop (floored
+  at 0) and sets `latencyMs` to a randomized spike, which `RoomTransition`
+  eases back down to a resting baseline via `setLatency` after the fade
+  completes.
 
 ## Coding Standards
 
@@ -187,8 +193,10 @@ headlines, ever.
   and stored in `useUIStore.reducedMotion`; respect it per the Animation
   Conventions above.
 - Arrow keys work as an alias for WASD from Phase 1 onward.
-- Interactive prompts ("Press E to interact", added from Phase 4) must also
-  be mirrored into an ARIA live region for screen readers.
+- Interactive prompts ("Press E to interact", added from Phase 6's About Me
+  terminal) must also be mirrored into an ARIA live region for screen
+  readers. Phase 4's room-to-room portals are walk-through triggers, not
+  E-press interactions — this rule doesn't apply to them.
 - Be honest about limits: a spatial 3D experience is not fully navigable
   non-visually. The `WebGLUnavailable` fallback (also shown to users who
   disable WebGL) is the accessible path of last resort, not a claim that the
@@ -200,7 +208,8 @@ headlines, ever.
   eagerly into `Experience`.
 - Prefer instanced meshes for any repeated geometry (server racks, cables,
   status lights) once a room needs more than a handful of repeated objects —
-  not yet needed with Phase 1's single placeholder room.
+  not yet needed; every room through Phase 4 has only a handful of primitives
+  each (floor, one or two portals, a light or two).
 - Physics colliders are `type="fixed"` for static geometry; only moving
   objects (packets, robots, once built) get dynamic rigid bodies.
 
@@ -255,29 +264,55 @@ colliders="cuboid"` (or a more precise collider shape once room geometry
 stops being simple boxes). Debug wireframes are only shown in development
 (`process.env.NODE_ENV === 'development'`).
 
+**The player has no physics body.** `CameraManager` moves the camera by
+writing `camera.position` directly (with hand-rolled gravity/ground
+clamping), not through a Rapier `RigidBody`/character controller. This means
+fixed colliders — including the locked-portal collider added in Phase 4 —
+cannot physically stop the player; nothing in the scene can collide with a
+camera that isn't itself a physics body. Locked-room enforcement today is
+therefore purely `useGameStore.enterRoom`'s no-op guard, not physics. This is
+fine while `ROOM_REGISTRY`'s `requiresVisited` chain stays linear (a locked
+portal is never actually reachable by normal play), but a real player
+collider/character controller should land before any phase introduces a
+genuinely reachable locked room (e.g. Phase 8's branching Projects cluster).
+
 ## Scene Organization
 
 One file per room under `scenes/world/`, registered by `RoomId` in
-`SceneManager`'s `ROOM_COMPONENTS` map. A room is only added to that map once
-it has real content — an unregistered `RoomId` in the room registry
-(`src/engine/constants/rooms.ts`) is expected and fine; `SceneManager`
-renders nothing for it until its phase builds it out. Every registered room
-is automatically wrapped in `RoomErrorBoundary` by `SceneManager` — rooms do
+`SceneManager`'s `ROOM_LOADERS` map. As of Phase 4, every `RoomId` has a
+loader: `load-balancer` uses its own bespoke `PlaceholderRoom`, and the
+other 10 are thin wrapper files (e.g. `ApiGatewayRoom.tsx`) that each render
+the shared `RoomTemplate` with their own room id — real bespoke content
+replaces a wrapper's generic template one room/cluster at a time starting
+Phase 5, without touching `SceneManager` again. Every registered room is
+automatically wrapped in `RoomErrorBoundary` by `SceneManager` — rooms do
 not need to add their own error handling.
 
 ## Reusable Interaction Patterns
 
 Established in later phases, recorded here as they're built:
-- **Terminal interaction** (Phase 4/6): walk up, press E, text prints with a
+- **Terminal interaction** (Phase 6): walk up, press E, text prints with a
   blinking cursor. Built once, reused for About Me, hidden terminals, and the
   Contact Gateway's POST-request form.
 - **Proximity trigger** (`useProximity`, added Phase 4): generic hook for
   "player is within N units of point X" — powers interact prompts and future
-  room preloading.
+  room preloading. `src/lib/proximity.ts`'s `isWithinRadius` is the pure,
+  unit-tested distance check underneath it; `useProximity` itself is
+  R3F-context-dependent and manually verified only.
+- **Room-to-room portals** (`Portal`/`RoomTransition`, Phase 4): crossing a
+  portal's proximity radius (not an E-press — reserved for the terminal
+  pattern above) emits `EventBus`'s `portal:trigger`, which `RoomTransition`
+  turns into a GSAP fade-out → `enterRoom` + `camera:reset` → fade-in
+  sequence. Portals are locked-aware (`useGameStore.isUnlocked`) and
+  bidirectional, derived from `ROOM_REGISTRY`'s forward `connections` via
+  `getIncomingRoomId` — no separate back-connection data is stored.
 - **Boot Sequence** (`src/components/boot/`, Phase 3): the established split
   for cinematic/timeline-driven UI is `bootScript.ts` (pure content
   generation), `TerminalOutput.tsx` (presentation), and `BootSequence.tsx`
   (GSAP orchestration) — reuse this split for future timeline-driven overlays.
+  `RoomTransition` (Phase 4) follows the same GSAP-timeline convention:
+  hold the running timeline in a ref and `.kill()` it on unmount, matching
+  `BootSequence`'s cleanup.
 
 ## Future Roadmap
 
