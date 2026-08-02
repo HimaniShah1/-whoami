@@ -26,7 +26,7 @@ export default function RoomTemplate({ roomId }: RoomTemplateProps) {
         </mesh>
       </RigidBody>
 
-      <Html position={[0, 3, 0]} center>
+      <Html position={[0, 3, 0]} center zIndexRange={[30, 0]}>
         <div className="pointer-events-none whitespace-nowrap font-mono text-xs text-primary-muted">
           {room.name.toUpperCase()}
         </div>

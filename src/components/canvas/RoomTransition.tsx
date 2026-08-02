@@ -19,6 +19,8 @@ export default function RoomTransition() {
 
   const [targetRoomId, setTargetRoomId] = useState<RoomId | null>(null);
   const [opacity, setOpacity] = useState(0);
+  const isTransitioningRef = useRef(false);
+  const timelineRef = useRef<gsap.core.Timeline | null>(null);
 
   useEffect(() => {
     reducedMotionRef.current = reducedMotion;
@@ -26,6 +28,9 @@ export default function RoomTransition() {
 
   useEffect(() => {
     const handleTrigger = (payload: AppEvents['portal:trigger']) => {
+      if (isTransitioningRef.current) return;
+      isTransitioningRef.current = true;
+
       const fadeDuration = reducedMotionRef.current
         ? REDUCED_MOTION_DURATION_SECONDS
         : FADE_DURATION_SECONDS;
@@ -38,8 +43,12 @@ export default function RoomTransition() {
       const latencyState = { value: 0 };
 
       const timeline = gsap.timeline({
-        onComplete: () => setTargetRoomId(null),
+        onComplete: () => {
+          isTransitioningRef.current = false;
+          setTargetRoomId(null);
+        },
       });
+      timelineRef.current = timeline;
 
       timeline.to(opacityState, {
         value: 1,
@@ -67,7 +76,10 @@ export default function RoomTransition() {
     };
 
     eventBus.on('portal:trigger', handleTrigger);
-    return () => eventBus.off('portal:trigger', handleTrigger);
+    return () => {
+      eventBus.off('portal:trigger', handleTrigger);
+      timelineRef.current?.kill();
+    };
   }, []);
 
   if (!targetRoomId) return null;

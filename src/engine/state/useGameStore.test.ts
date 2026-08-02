@@ -68,6 +68,23 @@ describe('useGameStore', () => {
     randomSpy.mockRestore();
   });
 
+  it('sets latencyMs to the minimum of the spike range when Math.random returns 0', () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
+    useGameStore.getState().enterRoom('api-gateway');
+    expect(useGameStore.getState().latencyMs).toBe(80);
+    randomSpy.mockRestore();
+  });
+
+  it('sets latencyMs to (near) the maximum of the spike range when Math.random returns just under 1', () => {
+    const randomValue = 0.999999;
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(randomValue);
+    useGameStore.getState().enterRoom('api-gateway');
+    const expected = Math.round(80 + randomValue * (220 - 80));
+    expect(expected).toBe(220);
+    expect(useGameStore.getState().latencyMs).toBe(expected);
+    randomSpy.mockRestore();
+  });
+
   it('setLatency sets the given value directly', () => {
     useGameStore.getState().setLatency(42);
     expect(useGameStore.getState().latencyMs).toBe(42);

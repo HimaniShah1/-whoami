@@ -1,8 +1,11 @@
 import { RigidBody } from '@react-three/rapier';
 import { colors } from '@/engine/constants/design-tokens';
+import { getRoomById } from '@/engine/constants/rooms';
 import Portal from './shared/Portal';
 
 export default function PlaceholderRoom() {
+  const forwardTargetId = getRoomById('load-balancer').connections[0]?.roomId;
+
   return (
     <group>
       <ambientLight intensity={0.15} color={colors.primaryMuted} />
@@ -22,7 +25,7 @@ export default function PlaceholderRoom() {
         </mesh>
       </RigidBody>
 
-      <Portal targetRoomId="api-gateway" direction="forward" />
+      {forwardTargetId && <Portal targetRoomId={forwardTargetId} direction="forward" />}
     </group>
   );
 }
