@@ -1,5 +1,6 @@
 import { RigidBody } from '@react-three/rapier';
 import { colors } from '@/engine/constants/design-tokens';
+import Portal from './shared/Portal';
 
 export default function PlaceholderRoom() {
   return (
@@ -20,6 +21,8 @@ export default function PlaceholderRoom() {
           <meshStandardMaterial color={colors.rackFrame} metalness={0.4} roughness={0.6} />
         </mesh>
       </RigidBody>
+
+      <Portal targetRoomId="api-gateway" direction="forward" />
     </group>
   );
 }
