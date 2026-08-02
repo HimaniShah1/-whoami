@@ -6,6 +6,12 @@ export type AppEvents = {
   'room:unlocked': { roomId: RoomId };
   'terminal:command': { command: string };
   'packet:delivered': { fromRoomId: RoomId; toRoomId: RoomId };
+  'portal:trigger': {
+    targetRoomId: RoomId;
+    spawnPosition: [number, number, number];
+    spawnFacingYaw: number;
+  };
+  'camera:reset': { position: [number, number, number]; facingYaw: number };
 };
 
 export const eventBus = mitt<AppEvents>();
