@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Experience from '@/components/canvas/Experience';
 import Hud from '@/components/hud/Hud';
+import RoomTransition from '@/components/canvas/RoomTransition';
 import WebGLUnavailable from '@/components/canvas/WebGLUnavailable';
 import ConnectionLost from '@/components/canvas/ConnectionLost';
 import BootSequence from '@/components/boot/BootSequence';
@@ -43,6 +44,7 @@ export default function AppRoot() {
     <>
       <Experience onContextLost={() => setContextLost(true)} />
       <Hud />
+      <RoomTransition />
     </>
   );
 }
