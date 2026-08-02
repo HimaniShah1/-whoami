@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRoomById, isRoomUnlocked, ROOM_REGISTRY } from './rooms';
+import { getIncomingRoomId, getRoomById, isRoomUnlocked, ROOM_REGISTRY } from './rooms';
 
 describe('ROOM_REGISTRY', () => {
   it('has an entry for every RoomId used by getRoomById', () => {
@@ -30,5 +30,16 @@ describe('isRoomUnlocked', () => {
 
   it('is true once all prerequisites are visited', () => {
     expect(isRoomUnlocked('api-gateway', new Set(['load-balancer']))).toBe(true);
+  });
+});
+
+describe('getIncomingRoomId', () => {
+  it('returns the room whose connections point at the given room', () => {
+    expect(getIncomingRoomId('api-gateway')).toBe('load-balancer');
+    expect(getIncomingRoomId('contact-gateway')).toBe('deployment-pipeline');
+  });
+
+  it('returns null for a room nothing connects to', () => {
+    expect(getIncomingRoomId('load-balancer')).toBeNull();
   });
 });

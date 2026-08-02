@@ -103,3 +103,9 @@ export function isRoomUnlocked(id: RoomId, visited: ReadonlySet<RoomId>): boolea
   const room = getRoomById(id);
   return room.requiresVisited.every((req) => visited.has(req));
 }
+
+export function getIncomingRoomId(id: RoomId): RoomId | null {
+  const entries = Object.values(ROOM_REGISTRY) as RoomDefinition[];
+  const source = entries.find((room) => room.connections.some((connection) => connection.roomId === id));
+  return source ? source.id : null;
+}
