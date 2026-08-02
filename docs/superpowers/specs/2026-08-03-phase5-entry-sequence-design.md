@@ -117,7 +117,7 @@ conversation.
   ```
   Every existing generic-room wrapper file (`AboutMeRoom.tsx`, etc.) is
   unchanged — they still render `<RoomTemplate roomId="..." />`.
-- **`src/scenes/world/shared/TerminalPanel.tsx`** — presentational only
+- **`src/components/canvas/TerminalPanel.tsx`** — presentational only
   (DOM), sibling to `TerminalOutput.tsx` (boot sequence) but standalone: no
   progress bar (that was boot-specific), just the revealed lines and a
   blinking cursor. Props: `{ title: string; visibleLines: string[]; done:
@@ -244,7 +244,7 @@ store action beyond its own local timeline state).
 
 ## Testing
 
-- `src/scenes/world/shared/TerminalPanel.tsx` gets an RTL unit test, like
+- `src/components/canvas/TerminalPanel.tsx` gets an RTL unit test, like
   its sibling `TerminalOutput.tsx` (`TerminalOutput.test.tsx`) — it's pure
   presentational DOM with no R3F/GSAP/proximity dependency, so it belongs
   in the same tested bucket as `TerminalOutput`/`Hud`, not the
