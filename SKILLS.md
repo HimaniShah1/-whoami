@@ -193,10 +193,11 @@ headlines, ever.
   and stored in `useUIStore.reducedMotion`; respect it per the Animation
   Conventions above.
 - Arrow keys work as an alias for WASD from Phase 1 onward.
-- Interactive prompts ("Press E to interact", added from Phase 6's About Me
-  terminal) must also be mirrored into an ARIA live region for screen
-  readers. Phase 4's room-to-room portals are walk-through triggers, not
-  E-press interactions — this rule doesn't apply to them.
+- Interactive prompts ("Press E to interact", added from Phase 5's Entry
+  sequence, where the terminal pattern is first established) must also be
+  mirrored into an ARIA live region for screen readers. Phase 4's
+  room-to-room portals are walk-through triggers, not E-press interactions —
+  this rule doesn't apply to them.
 - Be honest about limits: a spatial 3D experience is not fully navigable
   non-visually. The `WebGLUnavailable` fallback (also shown to users who
   disable WebGL) is the accessible path of last resort, not a claim that the
@@ -291,8 +292,9 @@ not need to add their own error handling.
 ## Reusable Interaction Patterns
 
 Established in later phases, recorded here as they're built:
-- **Terminal interaction** (Phase 6): walk up, press E, text prints with a
-  blinking cursor. Built once, reused for About Me, hidden terminals, and the
+- **Terminal interaction** (Phase 5): walk up, press E, text prints with a
+  blinking cursor. Built once during the Entry sequence (Load Balancer → API
+  Gateway → Auth), reused for About Me (Phase 6), hidden terminals, and the
   Contact Gateway's POST-request form.
 - **Proximity trigger** (`useProximity`, added Phase 4): generic hook for
   "player is within N units of point X" — powers interact prompts and future
