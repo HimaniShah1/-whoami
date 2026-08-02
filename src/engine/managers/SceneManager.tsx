@@ -5,7 +5,7 @@ import type { RoomId } from '@/types/rooms';
 import RoomErrorBoundary from './RoomErrorBoundary';
 
 const ROOM_LOADERS: Record<RoomId, () => Promise<{ default: ComponentType }>> = {
-  'load-balancer': () => import('@/scenes/world/PlaceholderRoom'),
+  'load-balancer': () => import('@/scenes/world/LoadBalancerRoom'),
   'api-gateway': () => import('@/scenes/world/ApiGatewayRoom'),
   'auth-service': () => import('@/scenes/world/AuthServiceRoom'),
   'about-me': () => import('@/scenes/world/AboutMeRoom'),
