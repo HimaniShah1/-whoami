@@ -59,8 +59,18 @@ export default function TerminalOverlay() {
     };
 
     eventBus.on('terminal:trigger', handleTrigger);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Escape' && openIdRef.current !== null) {
+        timelineRef.current?.kill();
+        setOpenId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       eventBus.off('terminal:trigger', handleTrigger);
+      window.removeEventListener('keydown', handleKeyDown);
       timelineRef.current?.kill();
     };
   }, []);
@@ -68,7 +78,7 @@ export default function TerminalOverlay() {
   if (!openId) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-4 left-4 z-30">
+    <div className="fixed bottom-4 left-4 z-30">
       <TerminalPanel
         title={title}
         visibleLines={lines.slice(0, visibleCount)}

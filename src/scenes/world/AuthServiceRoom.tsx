@@ -23,8 +23,8 @@ const AUTH_SERVICE_LINES = [
 ];
 
 const PANEL_POSITIONS: { position: [number, number, number]; rotationY: number }[] = [
-  { position: [-2.2, 1.5, -2.2], rotationY: Math.PI / 6 },
-  { position: [2.2, 1.5, -2.2], rotationY: -Math.PI / 6 },
+  { position: [-2.5, 1.5, -2.5], rotationY: Math.PI / 6 },
+  { position: [2.5, 1.5, -2.5], rotationY: -Math.PI / 6 },
 ];
 
 export default function AuthServiceRoom() {

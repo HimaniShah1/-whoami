@@ -27,8 +27,8 @@ const LOAD_BALANCER_LINES = [
 ];
 
 const RACK_POSITIONS: [number, number, number][] = [
-  [-2.5, 1, -3.5],
-  [0, 1, -4],
+  [-3, 1, -3.5],
+  [-1.5, 1, -4],
   [2.5, 1, -3.5],
 ];
 
