@@ -267,10 +267,13 @@ stops being simple boxes). Debug wireframes are only shown in development
 **The player now has a real physics body.** `CameraManager` mounts an
 invisible `kinematicPosition` `RigidBody` with a `CapsuleCollider`, and
 drives it each frame through a Rapier `KinematicCharacterController`
-(`world.createCharacterController`) rather than writing `camera.position`
-directly. The capsule's dimensions are derived from `EYE_HEIGHT`, not
-independently tuned: its total height equals `EYE_HEIGHT`, so the eyes sit
-at the capsule's top with no separate offset constant. This means fixed
+(`world.createCharacterController`). `camera.position` is still set every
+frame, but now from the physics body's collision-resolved translation
+rather than accumulated directly. The capsule's dimensions are derived from
+`EYE_HEIGHT`, not independently tuned: its total height equals `EYE_HEIGHT`,
+so the eyes sit at the capsule's top, reached via `PLAYER_EYE_OFFSET`
+(`EYE_HEIGHT / 2`) — a fixed, derived constant, not a separately tunable
+one. This means fixed
 colliders — including the locked-portal collider added in Phase 4 — now
 genuinely block the player via real collision resolution, not just
 visually. No autostep or snap-to-ground is enabled (every room floor is
