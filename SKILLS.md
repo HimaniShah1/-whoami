@@ -44,7 +44,8 @@ something real about backend engineering, not just look like it does.
   re-render 3D-relevant consumers and vice versa.
 - **`EventBus`** (`src/engine/managers/EventBus.ts`, built on `mitt`) is for
   cross-cutting notifications that multiple unrelated systems care about
-  (`room:entered`, `room:unlocked`, `terminal:command`, `packet:delivered`).
+  (`room:entered`, `room:unlocked`, `terminal:command`, `packet:delivered`,
+  `portal:trigger`, `camera:reset`, `terminal:trigger`).
   It is not a replacement for the stores — state lives in Zustand; the bus is
   for "something happened, react if you care."
 - **`AudioManager`** (`src/engine/managers/AudioManager.ts`) is a singleton
@@ -128,10 +129,14 @@ headlines, ever.
   require the `getDerivedStateFromError` lifecycle method).
 - Reusable geometry/material combinations that recur across rooms should be
   extracted into their own component under `scenes/world/shared/` once a
-  second room needs them. Established in Phase 4: `Portal` (the walk-through
-  room-to-room interactable) and `RoomTemplate` (the generic floor/lighting/
-  label/portals shell used by every room except the bespoke `load-balancer`)
-  both live there.
+  second room needs them. Established in Phase 4, refined in Phase 5:
+  `Portal` (the walk-through room-to-room interactable), `RoomShell` (the
+  floor/lighting/portals/optional-label baseline every room composes —
+  extracted from the original `RoomTemplate` once Phase 5's bespoke rooms
+  needed the same baseline plus their own geometry as `children`), the thin
+  `RoomTemplate` wrapper around `RoomShell` used by every still-generic
+  room, and `Terminal` (the walk-up-and-press-E interactable) all live
+  there.
 - `SceneManager`'s registry is the only place `React.lazy` is called for
   rooms; lazy components are created once at module scope, never inside a
   render function (recreating a lazy component every render causes remount/
@@ -280,22 +285,39 @@ genuinely reachable locked room (e.g. Phase 8's branching Projects cluster).
 ## Scene Organization
 
 One file per room under `scenes/world/`, registered by `RoomId` in
-`SceneManager`'s `ROOM_LOADERS` map. As of Phase 4, every `RoomId` has a
-loader: `load-balancer` uses its own bespoke `PlaceholderRoom`, and the
-other 10 are thin wrapper files (e.g. `ApiGatewayRoom.tsx`) that each render
-the shared `RoomTemplate` with their own room id — real bespoke content
-replaces a wrapper's generic template one room/cluster at a time starting
-Phase 5, without touching `SceneManager` again. Every registered room is
-automatically wrapped in `RoomErrorBoundary` by `SceneManager` — rooms do
-not need to add their own error handling.
+`SceneManager`'s `ROOM_LOADERS` map. Every `RoomId` has a loader (since
+Phase 4). As of Phase 5, `load-balancer`, `api-gateway`, and `auth-service`
+have real bespoke content (each composing `RoomShell` with its own
+geometry and a `Terminal`); the remaining 8 are still thin wrapper files
+(e.g. `AboutMeRoom.tsx`) that render the generic `RoomTemplate`. Giving a
+room bespoke content means replacing its wrapper file's contents in place —
+`SceneManager`'s `ROOM_LOADERS` entry only needs updating if the room's
+filename itself changes (as it did for `load-balancer`: `PlaceholderRoom`
+→ `LoadBalancerRoom`, since the placeholder name no longer fit once it had
+real content); a room whose filename doesn't change (`ApiGatewayRoom.tsx`,
+`AuthServiceRoom.tsx`) needs no `SceneManager` edit at all. Every registered
+room is automatically wrapped in `RoomErrorBoundary` by `SceneManager` —
+rooms do not need to add their own error handling.
 
 ## Reusable Interaction Patterns
 
 Established in later phases, recorded here as they're built:
-- **Terminal interaction** (Phase 5): walk up, press E, text prints with a
-  blinking cursor. Built once during the Entry sequence (Load Balancer → API
-  Gateway → Auth), reused for About Me (Phase 6), hidden terminals, and the
-  Contact Gateway's POST-request form.
+- **Terminal interaction** (`Terminal`/`TerminalOverlay`, Phase 5): walk up,
+  press E, text prints with a blinking cursor. Mirrors `Portal`/
+  `RoomTransition`'s split exactly — `Terminal` (in-scene R3F trigger)
+  reads `useProximity` (radius `TERMINAL_INTERACT_RADIUS = 2`, independent
+  of `Portal`'s own radius) and an edge-triggered `interact` key from
+  `useKeyboardControls`, then emits `EventBus`'s `terminal:trigger`;
+  `TerminalOverlay` (single top-level DOM component, mounted in `AppRoot`)
+  owns the GSAP reveal timeline, the `TerminalPanel` presentational
+  component, and the toggle/replace state machine: re-triggering the
+  currently-open terminal's id closes it, triggering a different id
+  replaces it, and pressing `Escape` closes whatever's open. Deliberately
+  does **not** auto-close when the player leaves the room — reading
+  continues while walking — which is why the explicit close affordances
+  (re-trigger, Escape) matter. Built once during the Entry sequence (Load
+  Balancer → API Gateway → Auth), reused for About Me (Phase 6), hidden
+  terminals, and the Contact Gateway's POST-request form.
 - **Proximity trigger** (`useProximity`, added Phase 4): generic hook for
   "player is within N units of point X" — powers interact prompts and future
   room preloading. `src/lib/proximity.ts`'s `isWithinRadius` is the pure,
