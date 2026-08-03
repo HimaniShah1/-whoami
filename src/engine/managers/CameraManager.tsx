@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type ComponentRef } from 'react';
+import { useCallback, useEffect, useRef, type ComponentRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { PointerLockControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -12,6 +12,7 @@ import {
   type RapierRigidBody,
 } from '@react-three/rapier';
 import type { KinematicCharacterController } from '@dimforge/rapier3d-compat';
+import { QueryFilterFlags } from '@dimforge/rapier3d-compat';
 import { useKeyboardControls } from '@/engine/hooks/useKeyboardControls';
 import { useUIStore } from '@/engine/state/useUIStore';
 import { eventBus, type AppEvents } from '@/engine/managers/EventBus';
@@ -23,6 +24,7 @@ import {
   GRAVITY,
   HEAD_BOB_AMPLITUDE,
   HEAD_BOB_FREQUENCY,
+  INITIAL_SPAWN_POSITION,
   JUMP_VELOCITY,
   MOVEMENT_RESPONSIVENESS,
   PLAYER_CAPSULE_HALF_HEIGHT,
@@ -31,11 +33,6 @@ import {
   SPRINT_MULTIPLIER,
   VOID_FALL_RESET_Y,
 } from '@/engine/constants/player';
-
-// Must match Experience.tsx's Canvas `camera={{ position: [...] }}` prop so
-// the physics body and the camera agree on where the player starts, before
-// any camera:reset event has fired.
-const INITIAL_SPAWN_POSITION: [number, number, number] = [0, EYE_HEIGHT, 5];
 
 export default function CameraManager() {
   const controlsRef = useRef<ComponentRef<typeof PointerLockControls>>(null);
@@ -55,6 +52,7 @@ export default function CameraManager() {
   const verticalVelocity = useRef(0);
   const isGrounded = useRef(true);
   const wasJumpPressed = useRef(false);
+  const awaitingGround = useRef(false);
   const bobWeight = useRef(0);
 
   useEffect(() => {
@@ -71,20 +69,24 @@ export default function CameraManager() {
   // camera:reset event below (portal crossings) and the void-fall safety
   // net inside useFrame (walking off a room's floor edge) — extracted here
   // rather than duplicated since both need the identical reset sequence.
-  const teleportTo = (position: [number, number, number], yaw: number) => {
-    camera.position.set(position[0], position[1], position[2]);
-    camera.rotation.set(0, yaw, 0);
-    rigidBodyRef.current?.setTranslation(
-      { x: position[0], y: position[1] - PLAYER_EYE_OFFSET, z: position[2] },
-      true,
-    );
-    velocity.current.x = 0;
-    velocity.current.z = 0;
-    verticalVelocity.current = 0;
-    isGrounded.current = true;
-    distanceTraveled.current = 0;
-    bobWeight.current = 0;
-  };
+  const teleportTo = useCallback(
+    (position: [number, number, number], yaw: number) => {
+      camera.position.set(position[0], position[1], position[2]);
+      camera.rotation.set(0, yaw, 0);
+      rigidBodyRef.current?.setTranslation(
+        { x: position[0], y: position[1] - PLAYER_EYE_OFFSET, z: position[2] },
+        true,
+      );
+      velocity.current.x = 0;
+      velocity.current.z = 0;
+      verticalVelocity.current = 0;
+      isGrounded.current = true;
+      distanceTraveled.current = 0;
+      bobWeight.current = 0;
+      awaitingGround.current = true;
+    },
+    [camera],
+  );
 
   useEffect(() => {
     const handleReset = ({ position, facingYaw }: AppEvents['camera:reset']) => {
@@ -144,22 +146,38 @@ export default function CameraManager() {
     desiredMovement.current.addScaledVector(forwardVector.current, -velocity.current.z * delta);
     desiredMovement.current.addScaledVector(rightVector.current, velocity.current.x * delta);
 
-    // Jump: edge-triggered on Space so a held key doesn't multi-jump.
-    if (keys.jump && !wasJumpPressed.current && isGrounded.current) {
-      verticalVelocity.current = JUMP_VELOCITY;
-      isGrounded.current = false;
-    }
+    const jumpWasPressedLastFrame = wasJumpPressed.current;
     wasJumpPressed.current = keys.jump;
 
-    const previousVerticalVelocity = verticalVelocity.current;
-    verticalVelocity.current = applyGravity(verticalVelocity.current, delta, GRAVITY);
-    desiredMovement.current.y = ((previousVerticalVelocity + verticalVelocity.current) / 2) * delta;
+    if (awaitingGround.current) {
+      // Frozen until real ground is confirmed under the teleported position
+      // (see teleportTo). During a portal crossing, the destination room's
+      // floor collider may not have mounted yet (its RigidBody unmounts with
+      // the old room and remounts once the new room's lazy chunk resolves) —
+      // integrating gravity during that gap can sink the player into or
+      // through the floor once it does appear.
+      desiredMovement.current.y = 0;
+    } else {
+      // Jump: edge-triggered on Space so a held key doesn't multi-jump.
+      if (keys.jump && !jumpWasPressedLastFrame && isGrounded.current) {
+        verticalVelocity.current = JUMP_VELOCITY;
+        isGrounded.current = false;
+      }
+
+      const previousVerticalVelocity = verticalVelocity.current;
+      verticalVelocity.current = applyGravity(verticalVelocity.current, delta, GRAVITY);
+      desiredMovement.current.y = ((previousVerticalVelocity + verticalVelocity.current) / 2) * delta;
+    }
 
     // The character controller resolves desiredMovement against fixed
     // colliders (room floors, locked portals) and returns a corrected,
     // slide-adjusted displacement — this is what makes those colliders
     // actually stop the player, unlike the old direct position write.
-    controller.computeColliderMovement(collider, desiredMovement.current);
+    controller.computeColliderMovement(
+      collider,
+      desiredMovement.current,
+      QueryFilterFlags.EXCLUDE_SENSORS,
+    );
     const corrected = controller.computedMovement();
     const grounded = controller.computedGrounded();
 
@@ -171,9 +189,14 @@ export default function CameraManager() {
     };
     rigidBody.setNextKinematicTranslation(next);
 
-    isGrounded.current = grounded;
-    if (grounded) {
+    const rising = verticalVelocity.current > 0;
+    isGrounded.current = grounded && !rising;
+    if (grounded && !rising) {
       verticalVelocity.current = 0;
+    }
+
+    if (awaitingGround.current && grounded) {
+      awaitingGround.current = false;
     }
 
     // Head-bob: cosmetic offset recomputed fresh each frame (not

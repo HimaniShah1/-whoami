@@ -264,17 +264,23 @@ colliders="cuboid"` (or a more precise collider shape once room geometry
 stops being simple boxes). Debug wireframes are only shown in development
 (`process.env.NODE_ENV === 'development'`).
 
-**The player has no physics body.** `CameraManager` moves the camera by
-writing `camera.position` directly (with hand-rolled gravity/ground
-clamping), not through a Rapier `RigidBody`/character controller. This means
-fixed colliders — including the locked-portal collider added in Phase 4 —
-cannot physically stop the player; nothing in the scene can collide with a
-camera that isn't itself a physics body. Locked-room enforcement today is
-therefore purely `useGameStore.enterRoom`'s no-op guard, not physics. This is
-fine while `ROOM_REGISTRY`'s `requiresVisited` chain stays linear (a locked
-portal is never actually reachable by normal play), but a real player
-collider/character controller should land before any phase introduces a
-genuinely reachable locked room (e.g. Phase 8's branching Projects cluster).
+**The player now has a real physics body.** `CameraManager` mounts an
+invisible `kinematicPosition` `RigidBody` with a `CapsuleCollider`, and
+drives it each frame through a Rapier `KinematicCharacterController`
+(`world.createCharacterController`) rather than writing `camera.position`
+directly. The capsule's dimensions are derived from `EYE_HEIGHT`, not
+independently tuned: its total height equals `EYE_HEIGHT`, so the eyes sit
+at the capsule's top with no separate offset constant. This means fixed
+colliders — including the locked-portal collider added in Phase 4 — now
+genuinely block the player via real collision resolution, not just
+visually. No autostep or snap-to-ground is enabled (every room floor is
+flat). One consequence worth noting: rooms have no perimeter walls, so
+real collision-based grounding means walking off a room's floor edge can
+cause an actual fall (previously impossible under the old height-only
+clamp) — a void-fall safety net in `CameraManager` catches this by
+snapping the player back to `(0, EYE_HEIGHT, 0)` if they fall below a
+threshold, relying on every room's floor being centered at its local
+origin.
 
 ## Scene Organization
 

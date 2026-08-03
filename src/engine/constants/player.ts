@@ -15,3 +15,8 @@ export const PLAYER_CAPSULE_HALF_HEIGHT = EYE_HEIGHT / 2 - PLAYER_CAPSULE_RADIUS
 export const PLAYER_EYE_OFFSET = EYE_HEIGHT / 2; // meters — capsule center to eye (== capsule top)
 export const CHARACTER_CONTROLLER_OFFSET = 0.01; // meters — Rapier's recommended small stability gap
 export const VOID_FALL_RESET_Y = -20; // meters — below this, snap the player back to room-center
+// Shared by Experience.tsx's Canvas `camera` prop and CameraManager's
+// initial RigidBody position, so the physics body and the camera always
+// agree on where the player starts, before any camera:reset event has
+// fired.
+export const INITIAL_SPAWN_POSITION: [number, number, number] = [0, EYE_HEIGHT, 5];
